@@ -92,10 +92,10 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Use Node.js 16
+      - name: Use Node.js 19
         uses: actions/setup-node@v3
         with:
-          node-version: '16'
+          node-version: '19'
 
       - name: Restore node_modules cache
         uses: actions/cache@v3
