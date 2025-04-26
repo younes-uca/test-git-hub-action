@@ -1,0 +1,340 @@
+openapi: 3.0.3
+info:
+  title: Title
+  description: Title
+  version: 1.0.0
+servers:
+  - url: 'https'
+paths:
+  /produits:
+    get:
+      summary: List all produits
+      operationId: listProduits
+      tags:
+        - produits
+      parameters:
+        - name: limit
+          in: query
+          description: How many items to return at one time (max 100)
+          required: false
+          type: integer
+          format: int32
+      responses:
+        "200":
+          description: A paged array of produits
+          headers:
+            x-next:
+              type: string
+              description: A link to the next page of responses
+          schema:
+            $ref: '#/definitions/Produits'
+        default:
+          description: unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    post:
+      summary: Create a produit
+      operationId: createProduits
+      tags:
+        - produits
+      responses:
+        "201":
+          description: Null response
+        default:
+          description: unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /produits/{produitId}:
+    get:
+      summary: Info for a specific produit
+      operationId: showProduitById
+      tags:
+        - produits
+      parameters:
+        - name: produitId
+          in: path
+          required: true
+          description: The id of the produit to retrieve
+          type: string
+      responses:
+        "200":
+          description: Expected response to a valid request
+          schema:
+            $ref: '#/definitions/Produits'
+        default:
+          description: unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /commandes:
+    get:
+      summary: List all commandes
+      operationId: listCommandes
+      tags:
+        - commandes
+      parameters:
+        - name: limit
+          in: query
+          description: How many items to return at one time (max 100)
+          required: false
+          type: integer
+          format: int32
+      responses:
+        "200":
+          description: A paged array of commandes
+          headers:
+            x-next:
+              type: string
+              description: A link to the next page of responses
+          schema:
+            $ref: '#/definitions/Commandes'
+        default:
+          description: unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    post:
+      summary: Create a commande
+      operationId: createCommandes
+      tags:
+        - commandes
+      responses:
+        "201":
+          description: Null response
+        default:
+          description: unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /commandes/{commandeId}:
+    get:
+      summary: Info for a specific commande
+      operationId: showCommandeById
+      tags:
+        - commandes
+      parameters:
+        - name: commandeId
+          in: path
+          required: true
+          description: The id of the commande to retrieve
+          type: string
+      responses:
+        "200":
+          description: Expected response to a valid request
+          schema:
+            $ref: '#/definitions/Commandes'
+        default:
+          description: unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /commandeDetails:
+    get:
+      summary: List all commandeDetails
+      operationId: listCommandeDetails
+      tags:
+        - commandeDetails
+      parameters:
+        - name: limit
+          in: query
+          description: How many items to return at one time (max 100)
+          required: false
+          type: integer
+          format: int32
+      responses:
+        "200":
+          description: A paged array of commandeDetails
+          headers:
+            x-next:
+              type: string
+              description: A link to the next page of responses
+          schema:
+            $ref: '#/definitions/CommandeDetails'
+        default:
+          description: unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    post:
+      summary: Create a commandeDetail
+      operationId: createCommandeDetails
+      tags:
+        - commandeDetails
+      responses:
+        "201":
+          description: Null response
+        default:
+          description: unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /commandeDetails/{commandeDetailId}:
+    get:
+      summary: Info for a specific commandeDetail
+      operationId: showCommandeDetailById
+      tags:
+        - commandeDetails
+      parameters:
+        - name: commandeDetailId
+          in: path
+          required: true
+          description: The id of the commandeDetail to retrieve
+          type: string
+      responses:
+        "200":
+          description: Expected response to a valid request
+          schema:
+            $ref: '#/definitions/CommandeDetails'
+        default:
+          description: unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /etatCommandes:
+    get:
+      summary: List all etatCommandes
+      operationId: listEtatCommandes
+      tags:
+        - etatCommandes
+      parameters:
+        - name: limit
+          in: query
+          description: How many items to return at one time (max 100)
+          required: false
+          type: integer
+          format: int32
+      responses:
+        "200":
+          description: A paged array of etatCommandes
+          headers:
+            x-next:
+              type: string
+              description: A link to the next page of responses
+          schema:
+            $ref: '#/definitions/EtatCommandes'
+        default:
+          description: unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    post:
+      summary: Create a etatCommande
+      operationId: createEtatCommandes
+      tags:
+        - etatCommandes
+      responses:
+        "201":
+          description: Null response
+        default:
+          description: unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /etatCommandes/{etatCommandeId}:
+    get:
+      summary: Info for a specific etatCommande
+      operationId: showEtatCommandeById
+      tags:
+        - etatCommandes
+      parameters:
+        - name: etatCommandeId
+          in: path
+          required: true
+          description: The id of the etatCommande to retrieve
+          type: string
+      responses:
+        "200":
+          description: Expected response to a valid request
+          schema:
+            $ref: '#/definitions/EtatCommandes'
+        default:
+          description: unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  
+
+
+definitions:
+  Produit:
+    type: "object"
+    required:
+      - id
+      - ref
+      - libelle
+      - prix
+    properties:
+      id:
+        type: int
+      ref:
+        type: string
+      libelle:
+        type: string
+      prix:
+        type: number
+  Produits:
+    type: array
+    items:
+      $ref: '#/definitions/Produit'
+  Commande:
+    type: "object"
+    required:
+      - id
+      - ref
+      - montant
+      - dateCommande
+    properties:
+      id:
+        type: int
+      ref:
+        type: string
+      montant:
+        type: number
+      dateCommande:
+        type: date
+  Commandes:
+    type: array
+    items:
+      $ref: '#/definitions/Commande'
+  CommandeDetail:
+    type: "object"
+    required:
+      - id
+      - prix
+      - qte
+    properties:
+      id:
+        type: int
+      prix:
+        type: number
+      qte:
+        type: number
+  CommandeDetails:
+    type: array
+    items:
+      $ref: '#/definitions/CommandeDetail'
+  EtatCommande:
+    type: "object"
+    required:
+      - id
+      - libelle
+      - code
+      - style
+      - description
+    properties:
+      id:
+        type: int
+      libelle:
+        type: string
+      code:
+        type: string
+      style:
+        type: string
+      description:
+        type: string
+  EtatCommandes:
+    type: array
+    items:
+      $ref: '#/definitions/EtatCommande'
+
+  Error:
+    type: "object"
+    required:
+      - code
+      - message
+    properties:
+      code:
+        type: integer
+        format: int32
+      message:
+        type: string

@@ -1,0 +1,190 @@
+stages:
+  - compile
+  - build_image
+  - security_scan_docker_image
+  - security
+  - upload_report
+  - deploy
+
+variables:
+  PROJECT_DIR: "backend-ms1" 
+  PROJECT_DIR_FRONT: "frontend"
+  IMAGE_TAG:  "zynerator/backend-ms1:v1"
+  IMAGE_TAG_FRONT: "zynerator/frontend-ms1:v2"
+  DOCKER_USER: "zynerator"
+
+cache:
+  key: ${CI_COMMIT_REF_SLUG}  
+  paths:
+    - ${PROJECT_DIR_FRONT}/node_modules  
+    - ${PROJECT_DIR}/.m2/repository  
+
+# ===========================
+# FRONTEND PIPELINE
+# ===========================
+
+compile_frontend:
+  stage: compile
+  image: node:18-bullseye
+  before_script:
+    - cd ${PROJECT_DIR_FRONT}
+    - npm ci  
+  script:
+    - npm run build
+  artifacts:
+    paths:
+      - ${PROJECT_DIR_FRONT}/.next  
+    expire_in: 1h
+
+build_image_frontend:
+    stage: build_image
+    image: docker:24
+    when: always
+    services:
+    - docker:24-dind
+    before_script:
+        - cd ${PROJECT_DIR_FRONT}
+        - echo ${DOCKER_TOKEN} | docker login --username ${DOCKER_USER} --password-stdin  
+    script:
+        
+        # Build the Docker image
+        - docker build -t ${IMAGE_TAG_FRONT} .
+        # Push the Docker image to the registry
+        - docker push ${IMAGE_TAG_FRONT}
+
+
+# # ===========================
+# # BACKEND PIPELINE
+# # ===========================
+
+compile_backend:
+  image: maven:3.9.8
+  stage: compile
+  script:
+    - echo "Packaging the project..."
+    - cd ${PROJECT_DIR}
+    - mvn clean package -DskipTests
+    - mvn compile -DskipTests
+  artifacts:
+    paths:
+      - ${PROJECT_DIR}/target/*.jar
+    expire_in: 1h
+
+  
+build_image_backend:
+    stage: build_image
+    needs: ["compile_backend"]
+    image: docker:24
+    when: always
+    services:
+    - docker:24-dind
+    before_script:
+      - cd ${PROJECT_DIR}
+      - echo "$DOCKER_TOKEN" | docker login --username "$DOCKER_USER" --password-stdin
+    script:
+      # Build the Docker image
+      - docker build -t ${IMAGE_TAG} .
+      # Push the Docker image to the registry
+      - docker push ${IMAGE_TAG}
+     
+# # ===========================
+# # SECURITY SCANS
+# # ===========================
+
+trivy:
+  stage: security_scan_docker_image
+  image: docker:24
+  services:
+    - docker:24-dind
+  before_script:
+    - apk --no-cache add curl python3 py3-pip
+    - rm /usr/lib/python3.*/EXTERNALLY-MANAGED
+    - pip3 install --no-cache-dir awscli
+    - curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+  script:
+    - docker pull $IMAGE_TAG
+    - docker pull $IMAGE_TAG_FRONT
+    - trivy image -f json -o TrivyScanImageBackend.json --severity HIGH,CRITICAL $IMAGE_TAG
+    - trivy image -f json -o TrivyScaneImageFrontend.json --severity HIGH,CRITICAL $IMAGE_TAG_FRONT
+  artifacts:
+    paths:
+      - TrivyScanImageBackend.json
+      - TrivyScaneImageFrontend.json
+    expire_in: 1 hour
+
+njsscan:
+  stage: security
+  image: python
+  before_script:
+    - pip3 install njsscan
+    - cd ${PROJECT_DIR_FRONT}
+  script:
+    - njsscan --exit-warning . --sarif -o njsscan.sarif
+  artifacts:
+    when: always
+    paths:
+      - ${PROJECT_DIR_FRONT}/njsscan.sarif
+    expire_in: 1h 
+  allow_failure: true
+
+semgrep:
+  stage: security
+  image: returntocorp/semgrep
+  variables:
+    SEMGREP_RULES: p/javascript
+  script:
+    - cd ${PROJECT_DIR_FRONT}
+    - semgrep ci --json --output semgrep.json
+    - pwd && ls -l
+  artifacts:
+    when: always
+    paths: 
+      - ${PROJECT_DIR_FRONT}/semgrep.json
+  allow_failure: true
+
+
+retire:
+  stage: security
+  image: node:18-bullseye
+  before_script:
+    - npm install -g retire
+    - cd ${PROJECT_DIR_FRONT}
+  script:
+    - retire --path . --outputformat json --outputpath retire.json
+  artifacts:
+    when: always
+    paths:
+      - ${PROJECT_DIR_FRONT}/retire.json
+    expire_in: 1h 
+  allow_failure: true
+
+gitleaks:
+  stage: security
+  image:
+    name: zricethezav/gitleaks
+    entrypoint: [""]
+  script: 
+    - gitleaks detect --source . --verbose --report-path gitleaks.json
+  artifacts:
+    when: always
+    paths:
+      - gitleaks.json
+    expire_in: 1h 
+  allow_failure: true
+
+# ===========================
+# REPORT UPLOAD
+# ===========================
+
+upload_report:
+  stage: upload_report
+  when: manual
+  tags:
+    - my_windows
+  needs: ['gitleaks', 'njsscan', 'retire', 'trivy','semgrep']
+  script:
+    - C:\Users\lenovo\AppData\Local\Programs\Python\Python313\python.exe upload-security-scan.py -f gitleaks.json ${PROJECT_DIR_FRONT}/retire.json ${PROJECT_DIR_FRONT}/semgrep.json TrivyScanImageBackend.json TrivyScaneImageFrontend.json ${PROJECT_DIR_FRONT}/njsscan.sarif  -st "Gitleaks Scan" "Retire.js Scan" "Semgrep JSON Report" "Trivy Scan" "Trivy Scan" "SARIF" --url "http://127.0.0.1:8080" -p "$ADMIN_PASSWORD"
+  allow_failure: false
+
+
+

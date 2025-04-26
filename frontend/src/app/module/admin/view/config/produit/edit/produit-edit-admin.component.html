@@ -1,0 +1,51 @@
+    <p-dialog [(visible)]="editDialog" [style]="{width: '70vw'}" header="{{'produit.tabPan' | translate}}" [modal]="true" styleClass="p-fluid" [maximizable]="true" [draggable]="false" [resizable]="false">
+<ng-template pTemplate="content" >
+        <p-tabView>
+            <p-tabPanel header="{{'produit.tabPan' | translate}}">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
+
+                                <div class="flex flex-col gap-2">
+                                    <label class="text-sm font-semibold" for="1">{{'produit.ref' | translate}}<span class="text-red-500">*</span></label>
+                                    <input type="text" pInputText  placeholder="{{'produit.ref' | translate}}" id="1" [(ngModel)]="item.ref"
+                                           [ngClass]="{'ng-invalid ng-dirty' : !validProduitRef}"  />
+                                    <small class="text-red-500" *ngIf='!validProduitRef'>Ref is obligatory.</small>
+                                </div>
+
+
+                                <div class="flex flex-col gap-2">
+                                    <label class="text-sm font-semibold" for="2">{{'produit.libelle' | translate}}<span class="text-red-500">*</span></label>
+                                    <input type="text" pInputText  placeholder="{{'produit.libelle' | translate}}" id="2" [(ngModel)]="item.libelle"
+                                           [ngClass]="{'ng-invalid ng-dirty' : !validProduitLibelle}"  />
+                                    <small class="text-red-500" *ngIf='!validProduitLibelle'>Libelle is obligatory.</small>
+                                </div>
+
+
+                                <div class="flex flex-col gap-2">
+                                    <label class="text-sm font-semibold" for="3">{{'produit.prix' | translate}}<span style="color: red;">*</span></label>
+                                    <p-inputNumber  id="3" placeholder="{{'produit.prix' | translate}}" [(ngModel)]="item.prix" [ngClass]="{'ng-invalid ng-dirty' : !validProduitPrix}"  >
+                                    </p-inputNumber>
+                                    <small class="text-red-500" *ngIf='!validProduitPrix'>Prix is obligatory.</small>
+                                </div>
+
+                </div>
+            </p-tabPanel>
+
+        </p-tabView>
+
+</ng-template>
+
+<ng-template pTemplate="footer" >
+    <div class="flex justify-end space-x-3 p-4">
+
+            <button class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-primary" label="{{'validate' | translate}}"  (click)="edit()">
+                <i class="pi pi-check"></i> {{'validate' | translate}}
+            </button>
+
+                <button (click)="hideEditDialog()" class="border border-gray-400 text-gray-600 hover:bg-gray-200 px-4 py-2 rounded-md">
+                    <i class="pi pi-times"></i> {{'cancel' | translate}}
+                </button>
+
+    </div>
+</ng-template>
+
+    </p-dialog>
